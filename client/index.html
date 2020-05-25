@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
+    <title class="title">Căutarea comori dB</title>
+    
+  </head>
+  <body>
+  <div class="container-fluid text-center">
+  
+  <div class="alert alert-primary" role="alert">
+    <h1>Căutarea comori don Bosco</h1>
+    <h3>Alege echipa</h3>
+  </div>
+  <br>
+
+<div id="squadre" class="btn-group-vertical" role="group" aria-label="Basic example"></div>
+
+  </div>
+  </body>
+<script type="text/javascript">
+const webAppLink = 'https://script.google.com/macros/s/AKfycbzwUsjq2IGjV-8Z1CWDySXjwXD1fFL_8s7dG5C5E6bGtnLz1FU/exec';
+onLoad();
+
+function onLoad() {
+  const url = webAppLink + '?action=teams';
+  fetch(url).then( response => {
+    if (response.ok) {  
+      return response.json();    // .text() or .json()
+    }
+  }).then( formattedResponse => { 
+    const squadreTag = document.getElementById("squadre");
+    formattedResponse.forEach( (squadra, indice) => {
+      let link = `cautarea.html?team=${indice+1}&tappa=1`;
+      squadreTag.innerHTML += `<a href="${link}" class="btn btn-outline-primary btn-lg" role="button" >${squadra}</a>`
+    }); 
+  }).catch( error => {               
+    console.log('ERRORE:', error);
+  });
+}
+
+  
+</script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>
+</html>
