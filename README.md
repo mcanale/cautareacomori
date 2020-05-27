@@ -10,6 +10,8 @@ Nel foglio di calcolo, esportato da un Google Spreadsheet, inteso come una alter
   - si scrivono le squadre,
   - si creano i percorsi diversi per ognuna (attraverso una funzione automatizzata)
   - si vede la progressione della squadra mano a mano che avanza nel percorso
+
 Nel file "apps script sheet" va lo script da mettere all'interno del foglio di calcolo, il Google Spreadsheet, attraverso il menù Strumenti - Editor di script.
-Nel file "apps script server" ci sono gli script da mettere in un file a parte con gli script che gestiscono la web app (che va ri-creata).
+
+Nel file "apps script server" ci sono gli script da mettere in un file a parte con gli script che gestiscono la web app (che va ri-creata sul proprio spreadsheet).
 
