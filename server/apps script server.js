@@ -1,6 +1,6 @@
 // WebApplication di Donboscoland.it per gestire più Caccie al Tesoro
 // Author: @Marco Canale, https://github.com/mcanale/
-// Version: 2.3 del 9 giu 2020
+// Version: 2.3 del 9 giugno 2020
 
 // Link: https://script.google.com/macros/s/AKfycbxYPw_W69bPB13Db_bO71j8Y-5WvGjwH2sHrzoO4fudWnQwpQd2/exec
 // Get Squadre: https://script.google.com/macros/s/AKfycbxYPw_W69bPB13Db_bO71j8Y-5WvGjwH2sHrzoO4fudWnQwpQd2/exec?caccia=rpsu&action=teams
