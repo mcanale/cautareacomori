@@ -1,6 +1,8 @@
 # cautareacomori
 Gestore di una Caccia al Tesoro (che in rumeno si dice Cautarea Comori)
 
+Video Tutorial a questo link: https://youtu.be/UDXmgDRdxMk
+
 Nella cartella "Client" ci sono i file da avere sul client, ad es mettendoli su un sito, 
 a cui poi la singola persona accede partendo dal file index.html
 
