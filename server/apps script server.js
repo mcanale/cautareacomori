@@ -1,10 +1,12 @@
 // WebApplication di Donboscoland.it per gestire più Caccie al Tesoro
 // Author: @Marco Canale, https://github.com/mcanale/
-// Version: 2.3 del 9 giugno 2020
+// Version: 2.5 del 18 giu 2020
 
 // Link: https://script.google.com/macros/s/AKfycbxYPw_W69bPB13Db_bO71j8Y-5WvGjwH2sHrzoO4fudWnQwpQd2/exec
 // Get Squadre: https://script.google.com/macros/s/AKfycbxYPw_W69bPB13Db_bO71j8Y-5WvGjwH2sHrzoO4fudWnQwpQd2/exec?caccia=rpsu&action=teams
 // Get Percorso: https://script.google.com/macros/s/AKfycbxYPw_W69bPB13Db_bO71j8Y-5WvGjwH2sHrzoO4fudWnQwpQd2/exec?caccia=rpsu&team=5&tappa=1
+
+const ssCaccieId = '1L6yjB5iFx6P0hRUgnXwxb-KbhA0vKPZ4niWMSKLcoqM';  // id dello Sheet con l'elenco delle Caccie al Tesoro
 
 
 // funzione che risponde alle richieste get: elenco dei team oppure i dati della tappa
@@ -21,6 +23,10 @@ function doGet(e) {
   const sheetOpzioni = spreadsheet.getSheetByName('opzioni');
   const opzioniMatrix = sheetOpzioni.getDataRange().getValues();
   const title = opzioniMatrix[4][1];
+  
+  // controlla che la caccia al tesoro sia attiva
+  const attiva = opzioniMatrix[5][1];
+  if (!attiva) return formatBadResponse('Errore: caccia ' + title + ' non attiva.');
   
   // carica tutti i dati dei percorsi
   const sheetPercorsi = spreadsheet.getSheetByName('percorsi');
@@ -76,7 +82,7 @@ function recuperaSpreadsheetCaccia(codeCaccia) {
   let idCaccia = cache.get(codeCaccia);
   // se il codice non era nella cache lo va a prendere dal foglio di calcolo
   if (idCaccia == null) {  
-    const ssCaccie = SpreadsheetApp.openById('1L6yjB5iFx6P0hRUgnXwxb-KbhA0vKPZ4niWMSKLcoqM');  
+    const ssCaccie = SpreadsheetApp.openById(ssCaccieId);  
     const sheetCaccie = ssCaccie.getSheetByName('caccie');
     const caccieMatrix = sheetCaccie.getDataRange().getValues();
     const codici = caccieMatrix.map(row => { return row[0].toLowerCase() });
@@ -134,7 +140,7 @@ function doPost(e) {
   
   // caso inserimento caccia al tesoro
   if (params.action == 'insert') {
-    const sheetCaccie = SpreadsheetApp.openById('1L6yjB5iFx6P0hRUgnXwxb-KbhA0vKPZ4niWMSKLcoqM').getSheetByName('caccie');
+    const sheetCaccie = SpreadsheetApp.openById(ssCaccieId).getSheetByName('caccie');
     // tenta di aprire l'url del foglio inviato
     try {
       const ss = SpreadsheetApp.openByUrl(params.url);
@@ -170,9 +176,34 @@ function doPost(e) {
     return ContentService.createTextOutput(0); 
   }
   
-  // caso di iscrizione di una persona
+  // caso di iscrizione al volo di una persona
   if (params.action == 'iscrizione') {
-    const percorso = creaPercorso(spreadsheet); 
+    // recupera l'opzione se usare i percorsi al volo preimpostati
+    const sheetOpzioni = spreadsheet.getSheetByName('opzioni');
+    const opzioniMatrix = sheetOpzioni.getDataRange().getValues();
+    const preimpostati = opzioniMatrix[6][1];
+    
+    // caso del percorso preso da quelli preimpostati
+    let percorso;
+    if (preimpostati) {
+      // cerca di recuperare l'id dell'ultimo percorso usato dalla memoria cache
+      const cache = CacheService.getScriptCache();
+      const keyIdPercorso = params.caccia+'_idPercorso';
+      let idPercorso = cache.get(keyIdPercorso);
+      // se non c'è parte dal primo altrimenti prende il percorso recuperato
+      idPercorso = idPercorso == null ? 1 : parseInt(idPercorso);
+      // memorizza nella cache il percorso successivo
+      const sheetPercorsiAlVolo = spreadsheet.getSheetByName('percorsiAlVolo');
+      const numPercorsi = sheetPercorsiAlVolo.getLastRow()-1;
+      const proxPercorso = idPercorso+1 > numPercorsi ? 1 : idPercorso+1;
+      cache.put(keyIdPercorso, proxPercorso, 3600); // salva in cache per 1 ora, poi ripartirà dal primo percorso
+      // recupera il prercorso corrispondente
+      percorso = sheetPercorsiAlVolo.getRange(idPercorso+1, 2, 1, sheetPercorsiAlVolo.getLastColumn()-1).getValues()[0];
+    } else { 
+      // caso percorso creato a caso
+      percorso = creaPercorso(spreadsheet); 
+    }
+    
     // inserisce l'iscritto e il percorso
     const sheetPercorsi = spreadsheet.getSheetByName('percorsi');
     const teamCode = sheetPercorsi.getLastRow();
@@ -234,6 +265,5 @@ function stringaPresente(sheetCaccie, colonna, stringa) {
   stringhe.shift(); // toglie la prima che è l'intestazione
   return stringhe.indexOf(stringa);
 }
-
 
 
