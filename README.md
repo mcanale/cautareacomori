@@ -1,4 +1,4 @@
-# Caccia al Tesoro - cautareacomori
+# Caccia al Tesoro - cautareacomori ver. 2.5
 Gestore di più Caccie al Tesoro (che in rumeno si dice Cautarea Comori)
 
 Video Tutorial a questo link: https://youtu.be/UDXmgDRdxMk
@@ -15,6 +15,7 @@ Nei fogli al suo interno:
   - si scrivono le squadre,
   - si creano i percorsi diversi per ognuna (attraverso una funzione automatizzata)
   - si vede la progressione della squadra mano a mano che avanza nel percorso
+  - (dalla ver. 2.5) si possono impostare dei percorsi per le iscrizioni al volo
 
 Nel file "apps script sheet" c'è lo script interno al Google Spreadsheet (a cui si accede attraverso il menù Strumenti - Editor di script).
 
