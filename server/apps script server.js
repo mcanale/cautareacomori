@@ -1,6 +1,6 @@
 // WebApplication di Donboscoland.it per gestire più Caccie al Tesoro
 // Author: @Marco Canale, https://github.com/mcanale/
-// Version: 2.5 del 18 giu 2020
+// Version: 2.6 del 19 giu 2020
 
 // Link: https://script.google.com/macros/s/AKfycbxYPw_W69bPB13Db_bO71j8Y-5WvGjwH2sHrzoO4fudWnQwpQd2/exec
 // Get Squadre: https://script.google.com/macros/s/AKfycbxYPw_W69bPB13Db_bO71j8Y-5WvGjwH2sHrzoO4fudWnQwpQd2/exec?caccia=rpsu&action=teams
@@ -10,7 +10,7 @@ const ssCaccieId = '1L6yjB5iFx6P0hRUgnXwxb-KbhA0vKPZ4niWMSKLcoqM';  // id dello 
 
 
 // funzione che risponde alle richieste get: elenco dei team oppure i dati della tappa
-function doGet(e) {
+function doGet(e) {  
   Logger.log(JSON.stringify(e));
   const params = e.parameter; // nb sono tutti stringhe
   
@@ -65,11 +65,14 @@ function doGet(e) {
   const luoghiMatrix = sheetLuoghi.getDataRange().getValues();
   const luogo = luoghiMatrix[indiceLuogo];
   
-  // recupera la distanza massima consentita
+  // recupera la distanza massima consentita, se mostrare le coordinate, e se mostrare l'indovinello
   const maxDistance = opzioniMatrix[0][1];
+  const showCoordinates = opzioniMatrix[7][1];
+  const showRiddle = opzioniMatrix[8][1];
   
   // formatta l'oggetto da restituire e lo invia
-  const luogoJson = JSON.stringify(formatResponse(luogo, percorsiMatrix[team][1], stages, maxDistance));
+  const luogoJson = JSON.stringify(formatResponse(luogo, percorsiMatrix[team][1], stages, maxDistance, showCoordinates, showRiddle));
+  Logger.log(luogoJson);
   return ContentService.createTextOutput(luogoJson).setMimeType(ContentService.MimeType.JSON); 
 }
 
@@ -102,7 +105,7 @@ function recuperaSpreadsheetCaccia(codeCaccia) {
 }
 
 // funzione che formatta l'array della tappa in un oggetto con i campi nominati prima di restituirlo
-function formatResponse(luogo, squadra, stages, maxDistance) {
+function formatResponse(luogo, squadra, stages, maxDistance, showCoordinates, showRiddle) {
   let response = {
     latitude: luogo[1],
     longitude: luogo[2],
@@ -111,6 +114,9 @@ function formatResponse(luogo, squadra, stages, maxDistance) {
     team: squadra,
     stages: stages,
     maxDistance: maxDistance,
+    showCoordinates: showCoordinates,
+    riddle: luogo[6],
+    showRiddle: showRiddle,
   };
   return response;
 }
