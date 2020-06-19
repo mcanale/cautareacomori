@@ -1,4 +1,4 @@
-# Caccia al Tesoro - cautareacomori ver. 2.5
+# Caccia al Tesoro - cautareacomori ver. 2.6
 Gestore di più Caccie al Tesoro (che in rumeno si dice Cautarea Comori)
 
 Video Tutorial a questo link: https://youtu.be/UDXmgDRdxMk
