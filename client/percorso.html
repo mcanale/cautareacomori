@@ -15,17 +15,28 @@
     <h3>Squadra: <span id="team"></span>.</h3>
     <h3>Tappa n° <span id="tappa"></span> di <span id="stages"></span>.</h3>
   </div>
-  <br>
-  <div id="sezioneIniziale" class="d-none">
+
+  <div id="sezioneIndovinello" class="d-none">
+    <br>
+    <p id="riddle"></p>
+  </div>
+  
+  <div id="sezioneCoordinate" class="d-none">
+    <br>
     <p>Vai alle coordinate: <span id="latitude"></span>,<span id="longitude"></span></p>
     <a id="linkMap" href="#" target="_blank" class="btn btn-primary" role="button" >Apri in Maps</a>
-    <br><br>
+  </div>
+
+  <div id="sezioneDistanza">
+    <br>
     <p>Alle <span id="ora">??</span> sei distante <span id="distanza">??</span> metri.</p>
     <p>Distanza massima: <span id="maxDistance"></span> metri.</p>
     <button type="button" class="btn btn-primary" onclick="rilevaPosizione()">Rileva posizione attuale</button>
   </div>
-  <br><br>
+
+  
   <div id="sezioneDomanda" class="alert alert-success d-none" role="alert">
+    <br>
     <p id="question"></p>
     <input type="text" id="risposta" class="container-fluid">
     <br><br>
@@ -33,7 +44,7 @@
   </div>
 
   <div id="sezioneTappaSuccessiva" class="d-none" role="alert">
-    <a id="linkTappaSuccessiva" href="#" class="btn btn-primary btn-lg" role="button" >Vai alla prossima tappa!</a>
+    <a id="linkTappaSuccessiva" href="#" class="btn btn-primary btn-lg" role="button" >Giusto! Vai alla prossima tappa!</a>
   </div>
 
   <div id="rispostaNegativa" class="alert alert-danger d-none" role="alert"></div>
@@ -43,8 +54,10 @@
   </body>
 <script type="text/javascript">
 const webAppLink = 'https://script.google.com/macros/s/AKfycbxYPw_W69bPB13Db_bO71j8Y-5WvGjwH2sHrzoO4fudWnQwpQd2/exec';
-let maxDist = 10;
-let risposta = '';
+let maxDist;
+let risposta;
+let latToFind;
+let lonToFind;
 onLoad();
 
 function onLoad() {
@@ -64,30 +77,52 @@ function caricaInformazioni() {
   const titles = document.getElementsByClassName("title");
   titles[0].innerHTML = localStorage.title + ' - Percorso';
   titles[1].innerHTML = localStorage.title;
+  // se ci sono recupera subito il nome della squadra e il numero delle tappe
   if (localStorage.team) document.getElementById('team').innerHTML = localStorage.team;
   if (localStorage.stages) document.getElementById('stages').innerHTML = localStorage.stages;
   
+  // prepara l'url per la richiesta delle info della tappa e fa la richiesta
   const url = `${webAppLink}?caccia=${caccia}&team=${team}&tappa=${tappa}`;
   fetch(url).then( response => {
     if (response.ok) {  
       return response.json();    // .text() or .json()
     }
-  }).then( place => {   // {"latitude":44.15456,"longitude":28.6082,"question":"domanda8?","answer":"8","team":"Marian","stages":9,"maxDistance":7}
-    // prende tutte le proprietà della risposta (vedi elenco sopra) e le assegna ai rispettivi campi, tranne la risposta che salva solamente
-    risposta = place.answer;
-    delete place.answer;
-    maxDist = place.maxDistance;
+  }).then( place => {   
+    // {"latitude":44.15456,"longitude":28.6082,"question":"domanda8?","answer":"8","team":"Marian","stages":9,"maxDistance":7, "showCoordinates":"1","riddle":"indovinello1","showRiddle":"1"}
+
+    // assegna tutte le proprietà della risposta ai rispettivi elementi della pagina
+    document.getElementById('team').innerHTML = place.team;
+    document.getElementById('stages').innerHTML = place.stages;
+    document.getElementById('maxDistance').innerHTML = place.maxDistance;
+    document.getElementById('question').innerHTML = place.question;
+
+    console.log('showCoordinates:', place.showCoordinates);
+    console.log('showRiddle:', place.showRiddle);
+
+    // solo se deve mostrare le coordinate
+    if (place.showCoordinates) {
+      // prepara il link del bottone Maps 
+      const linkMap = `https://www.google.com/maps/search/?api=1&query=${place.latitude},${place.longitude}`;
+      document.getElementById('linkMap').href = linkMap;
+      // mostra la sezione delle coordinate
+      document.getElementById('latitude').innerHTML = place.latitude;
+      document.getElementById('longitude').innerHTML = place.longitude;
+      document.getElementById('sezioneCoordinate').classList.remove("d-none");
+    }
+    // solo se deve mostrare l'indovinello
+    if (place.showRiddle) {
+      document.getElementById('riddle').innerHTML = place.riddle;
+      document.getElementById('sezioneIndovinello').classList.remove("d-none");
+    }
+
+    // salva in memoria per successivi utilizzi
     localStorage.team = place.team;
     localStorage.stages = place.stages;
-    const properties = Object.keys(place);
-    properties.forEach( proprieta => {
-      document.getElementById(proprieta).innerHTML = place[proprieta];
-    });
-    // prepara il link per l'apertura dei Maps con le coordinate
-    const linkMap = `https://www.google.com/maps/search/?api=1&query=${place.latitude},${place.longitude}`;
-    document.getElementById('linkMap').href = linkMap;
-    // mostra la sezione iniziale con le coordinate e i pulsanti
-    document.getElementById('sezioneIniziale').classList.remove("d-none");
+    latToFind = place.latitude;
+    lonToFind = place.longitude;
+    maxDist = place.maxDistance;
+    risposta = place.answer;
+    
     // prepara il link per la tappa successiva controllando che non siamo all'ultima tappa
     if (tappa == place.stages) {
       document.getElementById('linkTappaSuccessiva').innerHTML = 'SEI ARRIVATO ALLA FINE! COMPLIMENTI!!';
