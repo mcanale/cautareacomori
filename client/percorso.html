@@ -1,3 +1,9 @@
+<!--
+// WebApplication di Donboscoland.cloud per gestire più Caccie al Tesoro
+// Author: @Marco Canale, https://github.com/mcanale/
+// Version: 2.10 del 23 giu 2020
+ -->
+
 <!doctype html>
 <html lang="it">
   <head>
@@ -20,20 +26,28 @@
     <br>
     <p id="riddle"></p>
   </div>
+
+  <div id="sezioneImmagine" class="d-none">
+    <br>
+    <img id="immagine" src="" class="img-fluid" alt="Ricarica la pagina per vedere la foto della tappa">
+  </div>
   
   <div id="sezioneCoordinate" class="d-none">
     <br>
     <p>Vai alle coordinate: <span id="latitude"></span>,<span id="longitude"></span></p>
-    <a id="linkMap" href="#" target="_blank" class="btn btn-primary" role="button" >Apri in Maps</a>
   </div>
 
-  <div id="sezioneDistanza">
+  <div id="sezionePulsanteMaps" class="d-none">
+    <br>
+    <a id="linkMap" href="https://www.google.it/maps" target="_blank" class="btn btn-primary" role="button">Apri in Maps</a>
+  </div>
+
+  <div id="sezioneDistanza" class="d-none">
     <br>
     <p>Alle <span id="ora">??</span> sei distante <span id="distanza">??</span> metri.</p>
     <p>Distanza massima: <span id="maxDistance"></span> metri.</p>
     <button type="button" class="btn btn-primary" onclick="rilevaPosizione()">Rileva posizione attuale</button>
   </div>
-
   
   <div id="sezioneDomanda" class="alert alert-success d-none" role="alert">
     <br>
@@ -44,9 +58,11 @@
   </div>
 
   <div id="sezioneTappaSuccessiva" class="d-none" role="alert">
-    <a id="linkTappaSuccessiva" href="#" class="btn btn-primary btn-lg" role="button" >Giusto! Vai alla prossima tappa!</a>
+    <br>
+    <a id="linkTappaSuccessiva" href="#" class="btn btn-primary btn-lg" role="button" >Bene! Vai alla prossima tappa!</a>
   </div>
-
+  
+  <br>
   <div id="rispostaNegativa" class="alert alert-danger d-none" role="alert"></div>
   <br><br>
 
@@ -58,6 +74,7 @@ let maxDist;
 let risposta;
 let latToFind;
 let lonToFind;
+let showQuestion;
 onLoad();
 
 function onLoad() {
@@ -88,16 +105,21 @@ function caricaInformazioni() {
       return response.json();    // .text() or .json()
     }
   }).then( place => {   
-    // {"latitude":44.15456,"longitude":28.6082,"question":"domanda8?","answer":"8","team":"Marian","stages":9,"maxDistance":7, "showCoordinates":"1","riddle":"indovinello1","showRiddle":"1"}
+    // place={"latitude":44.15456,"longitude":28.6082,"question":"domanda8?","answer":"8","showQuestion":1,"team":"Marian","stages":9,"maxDistance":7, "showCoordinates":"1","riddle":"indovinello1","showRiddle":1,"showImage":1,"imageUrl":"https://drive.google.com/uc?id=1j5ugfFrijzxjja2Qq8bUmzMKRi6CqEhc&export=download"}
 
-    // assegna tutte le proprietà della risposta ai rispettivi elementi della pagina
+    // salva in memoria per successivi utilizzi
+    localStorage.team = place.team;
+    localStorage.stages = place.stages;
+    latToFind = place.latitude;
+    lonToFind = place.longitude;
+    maxDist = place.maxDistance;
+    showQuestion = place.showQuestion;
+
+    // assegna tutte le proprietà della risposta ai rispettivi elementi della pagina e mostra la sezione Distanza
     document.getElementById('team').innerHTML = place.team;
     document.getElementById('stages').innerHTML = place.stages;
     document.getElementById('maxDistance').innerHTML = place.maxDistance;
-    document.getElementById('question').innerHTML = place.question;
-
-    console.log('showCoordinates:', place.showCoordinates);
-    console.log('showRiddle:', place.showRiddle);
+    document.getElementById('sezioneDistanza').classList.remove("d-none");
 
     // solo se deve mostrare le coordinate
     if (place.showCoordinates) {
@@ -109,23 +131,27 @@ function caricaInformazioni() {
       document.getElementById('longitude').innerHTML = place.longitude;
       document.getElementById('sezioneCoordinate').classList.remove("d-none");
     }
+    document.getElementById('sezionePulsanteMaps').classList.remove("d-none");
     // solo se deve mostrare l'indovinello
     if (place.showRiddle) {
       document.getElementById('riddle').innerHTML = place.riddle;
       document.getElementById('sezioneIndovinello').classList.remove("d-none");
     }
-
-    // salva in memoria per successivi utilizzi
-    localStorage.team = place.team;
-    localStorage.stages = place.stages;
-    latToFind = place.latitude;
-    lonToFind = place.longitude;
-    maxDist = place.maxDistance;
-    risposta = place.answer;
+    // solo se deve mostrare l'immagine
+    if (place.showImage) {
+      document.getElementById('immagine').src = place.imageUrl;
+      document.getElementById('sezioneImmagine').classList.remove("d-none");
+    }
+    // solo se dovrà mostrare la domanda
+    if (showQuestion) {
+      document.getElementById('question').innerHTML = place.question;
+      risposta = place.answer;
+    }
     
     // prepara il link per la tappa successiva controllando che non siamo all'ultima tappa
     if (tappa == place.stages) {
       document.getElementById('linkTappaSuccessiva').innerHTML = 'SEI ARRIVATO ALLA FINE! COMPLIMENTI!!';
+      document.getElementById('linkTappaSuccessiva').href = "#";
     } else {
       const linkTappaSuccessiva = `percorso.html?caccia=${caccia}&team=${team}&tappa=${parseInt(tappa)+1}`;
       document.getElementById('linkTappaSuccessiva').href = linkTappaSuccessiva;
@@ -146,8 +172,6 @@ function elaboraPosizione(position) {
   const currentLat = position.coords.latitude;
   const currentLon = position.coords.longitude;
   const currentTime = new Date(position.timestamp).toLocaleTimeString();
-  const latToFind = document.getElementById('latitude').innerHTML;
-  const lonToFind = document.getElementById('longitude').innerHTML;
 
   let distanza = calcolaDistanza(currentLat, currentLon, latToFind, lonToFind).toFixed(2);
   // distanza = 5; // usato solo per testare
@@ -160,8 +184,14 @@ function elaboraPosizione(position) {
     rispostaNegativa.classList.remove("d-none");
     rispostaNegativa.innerHTML = "Troppo distante..."
   } else {
+    // controlla e, se non deve mostrare la domanda, manda già il segnale che la tappa è stata superata
     rispostaNegativa.classList.add("d-none");
-    sezioneDomanda.classList.remove("d-none");
+    if (showQuestion) {
+      sezioneDomanda.classList.remove("d-none");
+    } else {
+      sezioneTappaSuccessiva.classList.remove("d-none");
+      mandaSegnale();
+    }
   }
 }
 
