@@ -1,0 +1,119 @@
+<!--
+// WebApplication di Donboscoland.cloud per gestire più Caccie al Tesoro
+// Author: @Marco Canale, https://github.com/mcanale/
+// Version: 2.10 del 23 giu 2020
+ -->
+
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
+    <title class="title">Cautarea Comorii Don Bosco - Înscrierea</title>
+    
+  </head>
+  <body>
+  <div class="container-fluid text-center">
+  
+  <div class="alert alert-primary" role="alert">
+    <h1 class="title">Cautarea Comorii Don Bosco</h1>
+    <h3>Înscrierea / Alegerea echipei</h3>
+  </div>
+  <br>
+
+  <div id="sezioneCodice">
+  	<label>Codul Cautarea Comorii: </label>
+    <input type="text" id="caccia">
+    <br>
+    <button type="button" class="btn btn-primary" onclick="inviaCodice()">Trimite</button>
+    <br>
+    <div id="rispostaNegativa" class="alert alert-danger d-none" role="alert"></div>
+  </div>
+
+  <div id="sezioneIscrizione" class="d-none">
+  	<label>Nume: </label>
+    <input type="text" id="name">
+    <br><br>
+    <button type="button" class="btn btn-primary" onclick="iscriviEInizia()">Înscrie-mă și Începe</button>
+  </div>
+
+  <div id="sezioneSquadre" class="btn-group-vertical" role="group"></div>
+  <br><br>
+
+  </div>
+  </body>
+<script type="text/javascript">
+const webAppLink = 'https://script.google.com/macros/s/AKfycbxYPw_W69bPB13Db_bO71j8Y-5WvGjwH2sHrzoO4fudWnQwpQd2/exec';
+
+function inviaCodice() {
+  const caccia = document.getElementById('caccia').value;
+  // chiede al server l'elenco delle squadre
+  const url = `${webAppLink}?caccia=${caccia}&action=teams`;
+  fetch(url).then( response => {
+    if (response.ok) {  
+      return response.json();    // .text() or .json()
+    }
+  }).then( formattedResponse => { 
+  	// se dal server viene segnalato un errore 
+  	if (formattedResponse.error) {
+  		throw formattedResponse.message;
+  	}
+  	// imposta il titolo nelle due posizioni e lo salva nella memoria del browser
+  	localStorage.title = formattedResponse.title;
+    const titles = document.getElementsByClassName("title");
+    titles[0].innerHTML = localStorage.title + ' - Înscrierea';
+    titles[1].innerHTML = localStorage.title;
+  	// nasconde la sezione con il codice della caccia al tesoro
+  	const sezioneCodice = document.getElementById('sezioneCodice');
+    sezioneCodice.classList.add("d-none");
+    if (formattedResponse.inscription) {
+      // visualizza il teximput per iscriversi
+      const sezioneIscrizione = document.getElementById('sezioneIscrizione');
+      sezioneIscrizione.classList.remove("d-none");
+    } else {
+      // altrimenti aggiunge una serie di pulsanti-link al percorso della relativa squadra
+      const sezioneSquadre = document.getElementById("sezioneSquadre");
+      formattedResponse.teams.forEach( (squadra, indice) => {
+        let link = `percorso.html?caccia=${caccia}&team=${indice+1}&tappa=1`;
+        sezioneSquadre.innerHTML += `<a href="${link}" class="btn btn-outline-primary btn-lg" role="button" >${squadra}</a>`
+      }); 
+    }
+  }).catch( error => {
+    const rispostaNegativa = document.getElementById('rispostaNegativa');
+    rispostaNegativa.classList.remove("d-none");
+    rispostaNegativa.innerHTML = error;      
+    console.log('EROARE:', error);
+  });
+}
+
+
+// funzione che manda un segnale (post) al server per far inserire la squadra e redirige la pagina appena ottenuto il codice
+function iscriviEInizia() {
+  const caccia = document.getElementById('caccia').value;
+  const data = {
+  	caccia: caccia,
+    action: 'iscrizione',
+    name: document.getElementById('name').value,
+  };
+  // fa la richiesta al server
+  fetch(webAppLink, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  }).then( response => {
+    return response.text();  // .text() oppure .json()
+  }).then( teamCode => {   
+    // prepara il link per la redirezione e redirige la pagina
+    const link = `percorso.html?caccia=${caccia}&team=${teamCode}&tappa=1`;
+    window.location.href = link;
+  }).catch( error => {               
+    console.log('EROARE:', error);
+    alert('EROARE: ' + error);
+  });
+}
+  
+</script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>
+</html>
