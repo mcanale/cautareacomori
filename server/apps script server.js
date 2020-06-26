@@ -1,16 +1,16 @@
-// WebApplication di Donboscoland.it per gestire più Caccie al Tesoro
+// WebApplication di Donboscoland.cloud per gestire più Caccie al Tesoro
 // Author: @Marco Canale, https://github.com/mcanale/
-// Version: 2.6 del 19 giu 2020
+// Version: 2.10 del 23 giu 2020
 
 // Link: https://script.google.com/macros/s/AKfycbxYPw_W69bPB13Db_bO71j8Y-5WvGjwH2sHrzoO4fudWnQwpQd2/exec
 // Get Squadre: https://script.google.com/macros/s/AKfycbxYPw_W69bPB13Db_bO71j8Y-5WvGjwH2sHrzoO4fudWnQwpQd2/exec?caccia=rpsu&action=teams
-// Get Percorso: https://script.google.com/macros/s/AKfycbxYPw_W69bPB13Db_bO71j8Y-5WvGjwH2sHrzoO4fudWnQwpQd2/exec?caccia=rpsu&team=5&tappa=1
+// Get Percorso: https://script.google.com/macros/s/AKfycbxYPw_W69bPB13Db_bO71j8Y-5WvGjwH2sHrzoO4fudWnQwpQd2/exec?caccia=rpsu&team=1&tappa=1
+
 
 const ssCaccieId = '1L6yjB5iFx6P0hRUgnXwxb-KbhA0vKPZ4niWMSKLcoqM';  // id dello Sheet con l'elenco delle Caccie al Tesoro
 
-
 // funzione che risponde alle richieste get: elenco dei team oppure i dati della tappa
-function doGet(e) {  
+function doGet(e) { 
   Logger.log(JSON.stringify(e));
   const params = e.parameter; // nb sono tutti stringhe
   
@@ -19,25 +19,26 @@ function doGet(e) {
   const spreadsheet = recuperaSpreadsheetCaccia(params.caccia);
   if (!spreadsheet) return formatBadResponse('Error: caccia '+ params.caccia + ' does not exist.');
   
-  // recupera il titolo
+  // recupera tutte le opzioni e tra queste salva il titolo
   const sheetOpzioni = spreadsheet.getSheetByName('opzioni');
   const opzioniMatrix = sheetOpzioni.getDataRange().getValues();
-  const title = opzioniMatrix[4][1];
+  const title = opzioniMatrix[0][1];    // <- cambiato riferimento opzione
   
   // controlla che la caccia al tesoro sia attiva
-  const attiva = opzioniMatrix[5][1];
+  const attiva = opzioniMatrix[2][1];    // <- cambiato riferimento opzione
   if (!attiva) return formatBadResponse('Errore: caccia ' + title + ' non attiva.');
   
   // carica tutti i dati dei percorsi
   const sheetPercorsi = spreadsheet.getSheetByName('percorsi');
   const percorsiMatrix = sheetPercorsi.getDataRange().getValues();
   
-  // controlla se la richiesta è semplicemente quella di sapere l'elenco dei teams
+  // controlla se la richiesta è quella di sapere l'elenco dei teams
   if (params.action == 'teams') {
     // controlla l'impostazione delle iscrizioni al volo
-    const iscrizioniAlVolo = opzioniMatrix[3][1];
+    const iscrizioniAlVolo = opzioniMatrix[4][1];    // <- cambiato riferimento opzione
     if (iscrizioniAlVolo) 
       return ContentService.createTextOutput(JSON.stringify( {title: title, inscription: true} )).setMimeType(ContentService.MimeType.JSON);
+    // caso iscrizioni con scelta della squadra
     percorsiMatrix.shift();
     let teams = percorsiMatrix.map(row => {
       return row[1];
@@ -46,10 +47,10 @@ function doGet(e) {
   }
   
   // caso di richiesta della tappa del percorso
-  // controlla i parametri ricevuti e determina il numero totale di tappe, stages, che può variare se una squadra ha un percorso abbreviato
+  // controlla i parametri ricevuti e determina il numero totale di tappe (stages) che può variare se una squadra ha un percorso abbreviato
   const team = parseInt(params.team);
   const tappa = parseInt(params.tappa);
-  if (!team || !tappa) return formatBadResponse('Error: Parameter team and/or tappa not specified or not a numbers.');
+  if (!team || !tappa) return formatBadResponse('Error: Parameter team or tappa not specified or not a numbers.');
   if (team<1 || team>=percorsiMatrix.length) return formatBadResponse('Error: Parameter team not correct.');
   // se una squadra ha un percoro abbreviato restituisce un numero, altrimenti -1
   const indiceVuoto = percorsiMatrix[team].indexOf(''); 
@@ -58,6 +59,12 @@ function doGet(e) {
   // se è all'inizo della prima tappa segna l'orario di inizio della gara della squadra
   if (tappa == 1)
     segnaOrarioGara(spreadsheet, team, 0); // tappa 0 = colonna inizio
+  
+  // controlla che le tappe precedenti siano state fatte
+  const sheetGara = spreadsheet.getSheetByName('gara');
+  const garaMatrix = sheetGara.getDataRange().getValues();
+  const tappaPredecente = garaMatrix[team][tappa+1];
+  if (!tappaPredecente) return formatBadResponse('Error: Previous stage not done.');
 
   // recupera i dati del luogo indicato nel percorso
   const indiceLuogo = percorsiMatrix[team][tappa+1];
@@ -65,19 +72,35 @@ function doGet(e) {
   const luoghiMatrix = sheetLuoghi.getDataRange().getValues();
   const luogo = luoghiMatrix[indiceLuogo];
   
-  // recupera la distanza massima consentita, se mostrare le coordinate, e se mostrare l'indovinello
-  const maxDistance = opzioniMatrix[0][1];
-  const showCoordinates = opzioniMatrix[7][1];
-  const showRiddle = opzioniMatrix[8][1];
+  // recupera la distanza massima consentita, se mostrare le coordinate, se mostrare l'indovinello, se mostrare la domanda
+  const maxDistance = opzioniMatrix[3][1];    // <- cambiato riferimento opzione
+  const showCoordinates = opzioniMatrix[8][1];    // <- cambiato riferimento opzione
+  const showRiddle = opzioniMatrix[9][1];    // <- cambiato riferimento opzione
+  const showQuestion = opzioniMatrix[12][1];
+  
+  // recupera se mostrare la foto e l'url della foto stessa
+  const showImage = opzioniMatrix[10][1];    // <- cambiato riferimento opzione
+  let imageUrl = '';
+  if (showImage) {
+    const imagesFolderId = opzioniMatrix[11][1];    // <- cambiato riferimento opzione
+    const imagesFolder = DriveApp.getFolderById(imagesFolderId);
+    const imageName = luogo[7];
+    const files = imagesFolder.getFilesByName(imageName);
+    if (files.hasNext()) { 
+      const file = files.next(); 
+      Logger.log(file.getName());
+      imageUrl = file.getDownloadUrl();
+    }
+  }
   
   // formatta l'oggetto da restituire e lo invia
-  const luogoJson = JSON.stringify(formatResponse(luogo, percorsiMatrix[team][1], stages, maxDistance, showCoordinates, showRiddle));
+  const luogoJson = JSON.stringify(formatResponse(percorsiMatrix[team][1], stages, luogo, maxDistance, showCoordinates, showRiddle, showImage, imageUrl, showQuestion));
   Logger.log(luogoJson);
   return ContentService.createTextOutput(luogoJson).setMimeType(ContentService.MimeType.JSON); 
 }
 
 // funzione che recupera prima l'id e poi apre lo SpreadSheet dal rispettivo codice caccia
-// restituisce l'oggetto dello ss oppure null se non lo trova
+// restituisce l'id dello ss oppure null se non lo trova
 function recuperaSpreadsheetCaccia(codeCaccia) {
   // cerca di recuperare il codice dalla memoria cache
   const cache = CacheService.getScriptCache();
@@ -105,18 +128,21 @@ function recuperaSpreadsheetCaccia(codeCaccia) {
 }
 
 // funzione che formatta l'array della tappa in un oggetto con i campi nominati prima di restituirlo
-function formatResponse(luogo, squadra, stages, maxDistance, showCoordinates, showRiddle) {
+function formatResponse(team, stages, luogo, maxDistance, showCoordinates, showRiddle, showImage, imageUrl, showQuestion) {
   let response = {
+    team: team,
+    stages: stages,
     latitude: luogo[1],
     longitude: luogo[2],
-    question: luogo[4],
-    answer: luogo[5],
-    team: squadra,
-    stages: stages,
     maxDistance: maxDistance,
     showCoordinates: showCoordinates,
-    riddle: luogo[6],
     showRiddle: showRiddle,
+    riddle: luogo[6],
+    showImage: showImage,
+    imageUrl: imageUrl,
+    showQuestion: showQuestion,
+    question: luogo[4],
+    answer: luogo[5],
   };
   return response;
 }
@@ -140,7 +166,7 @@ function segnaOrarioGara(spreadsheet, team, tappa) {
 
 // risponde alla richiesta post, che è usata per 
 // inserire una caccia al tesoro, assegnare l'ora in cui viene superata una tappa e per iscrivere una persona
-function doPost(e) {
+function doPost(e) {  
   Logger.log(JSON.stringify(e));
   const params = JSON.parse(e.postData.contents);  // ATTENZIONE!! Fare JSON.parse()!!!
   
@@ -150,7 +176,7 @@ function doPost(e) {
     // tenta di aprire l'url del foglio inviato
     try {
       const ss = SpreadsheetApp.openByUrl(params.url);
-      var id = ss.getId(); // NB uso var invece che const perchè altrimenti lo scope di try id e email è solo dentro il try
+      var id = ss.getId(); // NB uso var invece che const perchè altrimenti lo scope di id e email è solo dentro il try
       // controlla se la caccia al tesoro è già presente
       const indiceId = stringaPresente(sheetCaccie, 1, id);
       if ( indiceId != -1 ) {
@@ -158,7 +184,7 @@ function doPost(e) {
         const teamCode = caccieMatrix[indiceId+1][0];
         return ContentService.createTextOutput(teamCode); 
       } 
-      var email = ss.getEditors()[0].getEmail();
+      var email = ss.getEditors()[0].getEmail(); // NB uso var per questioni di scope
     } catch(error) {
       return ContentService.createTextOutput(1);
     }
@@ -187,7 +213,7 @@ function doPost(e) {
     // recupera l'opzione se usare i percorsi al volo preimpostati
     const sheetOpzioni = spreadsheet.getSheetByName('opzioni');
     const opzioniMatrix = sheetOpzioni.getDataRange().getValues();
-    const preimpostati = opzioniMatrix[6][1];
+    const preimpostati = opzioniMatrix[7][1];    // <- cambiato riferimento opzione
     
     // caso del percorso preso da quelli preimpostati
     let percorso;
@@ -213,10 +239,11 @@ function doPost(e) {
     // inserisce l'iscritto e il percorso
     const sheetPercorsi = spreadsheet.getSheetByName('percorsi');
     const teamCode = sheetPercorsi.getLastRow();
-    sheetPercorsi.appendRow( [teamCode, params.name].concat(percorso) );
+    const rowToInsert = [teamCode, params.name].concat(percorso);
+    sheetPercorsi.getRange( teamCode+1, 1, 1, rowToInsert.length).setValues([ rowToInsert ]);
     // prepara la riga per la gara    
     const sheetGare = spreadsheet.getSheetByName('gara');
-    sheetGare.appendRow([teamCode, params.name]);
+    sheetGare.getRange( teamCode+1, 1, 1, 2).setValues([ [teamCode, params.name] ]);
     // restituisce il codice della squadra, così può reindirizzare al link del percorso
     return ContentService.createTextOutput(teamCode); 
   }
@@ -228,7 +255,7 @@ function doPost(e) {
 // funzione che crea un percorso (caso di iscrizione al volo)
 function creaPercorso(spreadsheet) {
   // recupera il numero di tappe, se i percorsi devono essere tutti uguali, e il numero dei luoghi inseriti
-  const opzioni = spreadsheet.getSheetByName('opzioni').getRange(2, 2, 2).getValues();
+  const opzioni = spreadsheet.getSheetByName('opzioni').getRange(6, 2, 2).getValues();    // <- cambiato riferimento opzione
   const numTappe = opzioni[0][0];
   const percorsiUguali = opzioni[1][0];
   const numeroLuoghi = spreadsheet.getSheetByName('luoghi').getLastRow()-1;
