@@ -1,6 +1,6 @@
 // WebApplication di Donboscoland.cloud per gestire più Caccie al Tesoro
 // Author: @Marco Canale, https://github.com/mcanale/
-// Version: 2.10 del 23 giu 2020
+// Version: 2.11 del 3 lug 2020
 
 // Link: https://script.google.com/macros/s/AKfycbxYPw_W69bPB13Db_bO71j8Y-5WvGjwH2sHrzoO4fudWnQwpQd2/exec
 // Get Squadre: https://script.google.com/macros/s/AKfycbxYPw_W69bPB13Db_bO71j8Y-5WvGjwH2sHrzoO4fudWnQwpQd2/exec?caccia=rpsu&action=teams
@@ -17,7 +17,7 @@ function doGet(e) {
   // recupera lo SpreadSheet della Caccia al Tesoro indicata
   if (!params.caccia) params.caccia = 'rpsu'; // se è vuoto utilizza la Caccia al Tesoro di Prova
   const spreadsheet = recuperaSpreadsheetCaccia(params.caccia);
-  if (!spreadsheet) return formatBadResponse('Error: caccia '+ params.caccia + ' does not exist.');
+  if (!spreadsheet) return formatBadResponse('Treasure hunt '+ params.caccia + ' does not exist.');
   
   // recupera tutte le opzioni e tra queste salva il titolo
   const sheetOpzioni = spreadsheet.getSheetByName('opzioni');
@@ -26,7 +26,7 @@ function doGet(e) {
   
   // controlla che la caccia al tesoro sia attiva
   const attiva = opzioniMatrix[2][1];    // <- cambiato riferimento opzione
-  if (!attiva) return formatBadResponse('Errore: caccia ' + title + ' non attiva.');
+  if (!attiva) return formatBadResponse('Treasure hunt ' + title + ' not active.');
   
   // carica tutti i dati dei percorsi
   const sheetPercorsi = spreadsheet.getSheetByName('percorsi');
@@ -50,12 +50,12 @@ function doGet(e) {
   // controlla i parametri ricevuti e determina il numero totale di tappe (stages) che può variare se una squadra ha un percorso abbreviato
   const team = parseInt(params.team);
   const tappa = parseInt(params.tappa);
-  if (!team || !tappa) return formatBadResponse('Error: Parameter team or tappa not specified or not a numbers.');
-  if (team<1 || team>=percorsiMatrix.length) return formatBadResponse('Error: Parameter team not correct.');
+  if (!team || !tappa) return formatBadResponse('Parameter team or tappa not specified or not a numbers.');
+  if (team<1 || team>=percorsiMatrix.length) return formatBadResponse('Parameter team not correct.');
   // se una squadra ha un percoro abbreviato restituisce un numero, altrimenti -1
   const indiceVuoto = percorsiMatrix[team].indexOf(''); 
   const stages = indiceVuoto == -1 ? percorsiMatrix[0].length-2 : indiceVuoto-2;
-  if (tappa<1 || tappa>stages) return formatBadResponse('Error: Parameter tappa not correct.');
+  if (tappa<1 || tappa>stages) return formatBadResponse('Parameter tappa not correct.');
   // se è all'inizo della prima tappa segna l'orario di inizio della gara della squadra
   if (tappa == 1)
     segnaOrarioGara(spreadsheet, team, 0); // tappa 0 = colonna inizio
@@ -64,7 +64,7 @@ function doGet(e) {
   const sheetGara = spreadsheet.getSheetByName('gara');
   const garaMatrix = sheetGara.getDataRange().getValues();
   const tappaPredecente = garaMatrix[team][tappa+1];
-  if (!tappaPredecente) return formatBadResponse('Error: Previous stage not done.');
+  if (!tappaPredecente) return formatBadResponse('Previous stage not done.');
 
   // recupera i dati del luogo indicato nel percorso
   const indiceLuogo = percorsiMatrix[team][tappa+1];
@@ -200,7 +200,7 @@ function doPost(e) {
   // in entrambi i casi recupera lo SpreadSheet della Caccia al Tesoro indicata
   if (!params.caccia) params.caccia = 'rpsu'; // se è vuoto utilizza la Caccia al Tesoro di Prova
   const spreadsheet = recuperaSpreadsheetCaccia(params.caccia);
-  if (!spreadsheet) return formatBadResponse('Error: caccia '+ params.caccia + ' does not exist.');
+  if (!spreadsheet) return formatBadResponse('Treasure hunt '+ params.caccia + ' does not exist.');
 
   // caso di segnale di superamento della tappa
   if (params.action == 'segnaleTappa') {
@@ -249,7 +249,7 @@ function doPost(e) {
   }
   
   // caso azione non prevista
-  return formatBadResponse('Error: Parameter action not specified or not correct.');
+  return formatBadResponse('Parameter action not specified or not correct.');
 }
 
 // funzione che crea un percorso (caso di iscrizione al volo)
