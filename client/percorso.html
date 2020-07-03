@@ -1,7 +1,7 @@
 <!--
 // WebApplication di Donboscoland.cloud per gestire più Caccie al Tesoro
 // Author: @Marco Canale, https://github.com/mcanale/
-// Version: 2.10 del 23 giu 2020
+// Version: 2.11 del 3 lug 2020
  -->
 
 <!doctype html>
@@ -70,7 +70,7 @@
   </body>
 <script type="text/javascript">
 const webAppLink = 'https://script.google.com/macros/s/AKfycbxYPw_W69bPB13Db_bO71j8Y-5WvGjwH2sHrzoO4fudWnQwpQd2/exec';
-let maxDist;
+let maxDist = 10;
 let risposta;
 let latToFind;
 let lonToFind;
@@ -78,10 +78,10 @@ let showQuestion;
 onLoad();
 
 function onLoad() {
-  if (!navigator.geolocation)
-    elaboraErrore('Geolocation NOT possible');
-  else 
+  if (navigator.geolocation)
     caricaInformazioni();
+  else 
+    elaboraErrore('Geolocation NOT possible');
 }
 
 // funzione per preparare le informazioni della pagina al caricamento
@@ -105,6 +105,10 @@ function caricaInformazioni() {
       return response.json();    // .text() or .json()
     }
   }).then( place => {   
+    // se dal server viene segnalato un errore, es. {"error":true,"message":"Previous stage not done."}
+    if (place.error) {
+      throw place.message;
+    }
     // place={"latitude":44.15456,"longitude":28.6082,"question":"domanda8?","answer":"8","showQuestion":1,"team":"Marian","stages":9,"maxDistance":7, "showCoordinates":"1","riddle":"indovinello1","showRiddle":1,"showImage":1,"imageUrl":"https://drive.google.com/uc?id=1j5ugfFrijzxjja2Qq8bUmzMKRi6CqEhc&export=download"}
 
     // salva in memoria per successivi utilizzi
@@ -156,15 +160,15 @@ function caricaInformazioni() {
       const linkTappaSuccessiva = `percorso.html?caccia=${caccia}&team=${team}&tappa=${parseInt(tappa)+1}`;
       document.getElementById('linkTappaSuccessiva').href = linkTappaSuccessiva;
     }    
-  }).catch( error => {               
-    elaboraErrore('Stage loading failed');
+  }).catch( error => {  
+    elaboraErrore('Stage loading failed: ' + error);
   });
 }
 
 // funzione azionata dal bottone rileva posizione che rileva la posizione e ne gestisce le conseguenze
 function rilevaPosizione() {
   console.log('rilevaPosizione');
-  navigator.geolocation.getCurrentPosition(elaboraPosizione, elaboraErrore, { enableHighAccuracy: true });
+  navigator.geolocation.getCurrentPosition(elaboraPosizione, elaboraErrore, {maximumAge: 0, enableHighAccuracy: true });
 }
 
 function elaboraPosizione(position) {
@@ -182,7 +186,7 @@ function elaboraPosizione(position) {
   const rispostaNegativa = document.getElementById('rispostaNegativa');
   if (distanza > maxDist) {
     rispostaNegativa.classList.remove("d-none");
-    rispostaNegativa.innerHTML = "Troppo distante..."
+    rispostaNegativa.innerHTML = "Troppo distante...<br>(se sei nel luogo corretto, clicca sul pulsante Apri in Maps e muoviti un po' per aggiornare il segnale gps)"
   } else {
     // controlla e, se non deve mostrare la domanda, manda già il segnale che la tappa è stata superata
     rispostaNegativa.classList.add("d-none");
@@ -245,8 +249,10 @@ function controllaRisposta() {
 }
 
 function elaboraErrore(errore) {
+  const rispostaNegativa = document.getElementById('rispostaNegativa');
+  rispostaNegativa.classList.remove("d-none");
+  rispostaNegativa.innerHTML = 'ERROR: ' + errore;      
   console.log('ERROR:', errore);
-  alert('ERROR: ' + errore);
 }
 
 </script>
