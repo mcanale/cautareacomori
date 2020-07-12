@@ -1,7 +1,7 @@
 <!--
 // WebApplication di Donboscoland.cloud per gestire più Caccie al Tesoro
 // Author: @Marco Canale, https://github.com/mcanale/
-// Version: 2.10 del 23 giu 2020
+// Version: 2.12 del 12 lug 2020
  -->
 
 <!doctype html>
@@ -82,8 +82,8 @@ function inviaCodice() {
   }).catch( error => {
     const rispostaNegativa = document.getElementById('rispostaNegativa');
     rispostaNegativa.classList.remove("d-none");
-    rispostaNegativa.innerHTML = error;      
-    console.log('ERRORE:', error);
+    rispostaNegativa.innerHTML = error;
+    console.log(error);
   });
 }
 
@@ -91,10 +91,12 @@ function inviaCodice() {
 // funzione che manda un segnale (post) al server per far inserire la squadra e redirige la pagina appena ottenuto il codice
 function iscriviEInizia() {
   const caccia = document.getElementById('caccia').value;
+  const name = document.getElementById('name').value;
+  if (name == '') return;
   const data = {
   	caccia: caccia,
     action: 'iscrizione',
-    name: document.getElementById('name').value,
+    name: name,
   };
   // fa la richiesta al server
   fetch(webAppLink, {
