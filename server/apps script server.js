@@ -1,6 +1,6 @@
 // WebApplication di Donboscoland.cloud per gestire più Caccie al Tesoro
 // Author: @Marco Canale, https://github.com/mcanale/
-// Version: 2.11 del 3 lug 2020
+// Version: 2.12 del 12 lug 2020
 
 // Link: https://script.google.com/macros/s/AKfycbxYPw_W69bPB13Db_bO71j8Y-5WvGjwH2sHrzoO4fudWnQwpQd2/exec
 // Get Squadre: https://script.google.com/macros/s/AKfycbxYPw_W69bPB13Db_bO71j8Y-5WvGjwH2sHrzoO4fudWnQwpQd2/exec?caccia=rpsu&action=teams
@@ -65,6 +65,10 @@ function doGet(e) {
   const garaMatrix = sheetGara.getDataRange().getValues();
   const tappaPredecente = garaMatrix[team][tappa+1];
   if (!tappaPredecente) return formatBadResponse('Previous stage not done.');
+  
+  // controlla che la tappa corrente non sia già stata fatta
+  const tappaCorrente = garaMatrix[team][tappa+2];
+  if (tappaCorrente) return formatBadResponse('Stage already done.');
 
   // recupera i dati del luogo indicato nel percorso
   const indiceLuogo = percorsiMatrix[team][tappa+1];
