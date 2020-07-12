@@ -1,4 +1,4 @@
-# Caccia al Tesoro - cautareacomori ver. 2.11
+# Caccia al Tesoro - cautareacomori ver. 2.12
 Creatore e Gestore di più Caccie al Tesoro (che in rumeno si dice Cautarea Comorii)
 
 Video Tutorial a questo link: https://youtu.be/IOGKg8xq8DI (nuovo per la ver. 2.10)
