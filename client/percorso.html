@@ -1,7 +1,7 @@
 <!--
 // WebApplication di Donboscoland.cloud per gestire più Caccie al Tesoro
 // Author: @Marco Canale, https://github.com/mcanale/
-// Version: 2.11 del 3 lug 2020
+// Version: 2.12 del 12 lug 2020
  -->
 
 <!doctype html>
@@ -155,12 +155,26 @@ function caricaInformazioni() {
     // prepara il link per la tappa successiva controllando che non siamo all'ultima tappa
     if (tappa == place.stages) {
       document.getElementById('linkTappaSuccessiva').innerHTML = 'SEI ARRIVATO ALLA FINE! COMPLIMENTI!!';
-      document.getElementById('linkTappaSuccessiva').href = "#";
+      document.getElementById('linkTappaSuccessiva').href = '';
     } else {
       const linkTappaSuccessiva = `percorso.html?caccia=${caccia}&team=${team}&tappa=${parseInt(tappa)+1}`;
       document.getElementById('linkTappaSuccessiva').href = linkTappaSuccessiva;
-    }    
+    }
+
   }).catch( error => {  
+    // caso di caricamento di una tappa già effettuata, es. se accidentalmente viene premuto il pulsante indietro del browser
+    if (error == 'Stage already done.') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const caccia = urlParams.get('caccia');
+      const team = urlParams.get('team');
+      const tappa = urlParams.get('tappa');
+      const linkTappaSuccessiva = `percorso.html?caccia=${caccia}&team=${team}&tappa=${parseInt(tappa)+1}`;
+      document.getElementById('linkTappaSuccessiva').href = linkTappaSuccessiva;
+      document.getElementById('linkTappaSuccessiva').innerHTML = 'Tappa già fatta! Vai alla prossima tappa!';
+      sezioneTappaSuccessiva.classList.remove("d-none");
+      return;
+    }
+
     elaboraErrore('Stage loading failed: ' + error);
   });
 }
