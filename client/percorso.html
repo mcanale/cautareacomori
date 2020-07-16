@@ -1,7 +1,7 @@
 <!--
 // WebApplication di Donboscoland.cloud per gestire più Caccie al Tesoro
 // Author: @Marco Canale, https://github.com/mcanale/
-// Version: 2.12 del 12 lug 2020
+// Version: 2.14 del 14 lug 2020
  -->
 
 <!doctype html>
@@ -182,7 +182,12 @@ function caricaInformazioni() {
 // funzione azionata dal bottone rileva posizione che rileva la posizione e ne gestisce le conseguenze
 function rilevaPosizione() {
   console.log('rilevaPosizione');
-  navigator.geolocation.getCurrentPosition(elaboraPosizione, elaboraErrore, {maximumAge: 0, enableHighAccuracy: true });
+  const options = {
+    enableHighAccuracy: true, 
+    maximumAge: 0, 
+    timeout: 10000,
+  };
+  navigator.geolocation.getCurrentPosition(elaboraPosizione, elaboraErrore, options);
 }
 
 function elaboraPosizione(position) {
@@ -265,7 +270,7 @@ function controllaRisposta() {
 function elaboraErrore(errore) {
   const rispostaNegativa = document.getElementById('rispostaNegativa');
   rispostaNegativa.classList.remove("d-none");
-  rispostaNegativa.innerHTML = 'ERROR: ' + errore;      
+  rispostaNegativa.innerHTML = 'ERROR ' + errore.code + ': ' + errore.message;
   console.log('ERROR:', errore);
 }
 
