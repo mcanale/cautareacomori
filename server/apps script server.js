@@ -146,7 +146,7 @@ function formatResponse(team, stages, luogo, maxDistance, showCoordinates, showR
     imageUrl: imageUrl,
     showQuestion: showQuestion,
     question: luogo[4],
-    answer: luogo[5],
+    answer: luogo[5].toString().trim(),
   };
   return response;
 }
