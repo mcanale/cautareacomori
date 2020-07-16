@@ -271,6 +271,8 @@ function elaboraErrore(errore) {
   const rispostaNegativa = document.getElementById('rispostaNegativa');
   rispostaNegativa.classList.remove("d-none");
   rispostaNegativa.innerHTML = 'ERROR ' + errore.code + ': ' + errore.message;
+  if (errore.code == 1)
+    rispostaNegativa.innerHTML += '<br>SOLUZIONE<br>Vai su Chrome. Clicca sui tre pallini in alto a destra. Clicca su Impostazioni. Scorri in basso in Avanzate e clicca su Impostazioni sito. Clicca su Posizione. Controlla che Chiedi conferma... sia abilitato. Clicca su Bloccato. Controlla che il sito https://wwww.donboscoland.cloud non sia in questo elenco. Se è così clicca sul sito, poi su Accesso alla posizione e su consenti. Ora puoi tornare al gioco cliccando sulle Frecce a sinistra in alto.';
   console.log('ERROR:', errore);
 }
 
